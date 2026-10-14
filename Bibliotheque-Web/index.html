@@ -1,0 +1,132 @@
+﻿<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bibliothèque Web</title>
+    <meta name="description" content="Catalogue local des ressources web et templates de la bibliothèque personnelle.">
+    <link rel="stylesheet" href="gallery.css">
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="page-header">
+        <div class="brand-block" aria-label="Bibliothèque Web">
+          <div class="brand-mark" aria-hidden="true">B</div>
+          <div>
+            <p class="eyebrow">Catalogue local</p>
+            <h1>Bibliothèque Web</h1>
+          </div>
+        </div>
+        <div class="status-pill" aria-live="polite">Hors ligne · local</div>
+      </header>
+
+      <section class="masthead" aria-labelledby="library-title">
+        <div class="masthead-copy">
+          <p class="section-kicker">Index personnel</p>
+          <h2 id="library-title">Ressources web et modèles de développement</h2>
+          <p id="librarySummary">Chargement du catalogue…</p>
+        </div>
+        <div class="metrics" aria-label="Statistiques du catalogue">
+          <article class="metric-card">
+            <span class="metric-label">Total</span>
+            <strong id="metricTotal">0</strong>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">Catégories</span>
+            <strong id="metricCategories">0</strong>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">Technologies</span>
+            <strong id="metricTechnologies">0</strong>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label" id="metricReadyLabel">Non testés</span>
+            <strong id="metricReady">0</strong>
+          </article>
+        </div>
+      </section>
+
+      <section class="toolbar" aria-label="Filtres et recherche">
+        <label class="search-field" for="searchInput">
+          <span>Recherche</span>
+          <input id="searchInput" type="search" placeholder="Nom, description, technologie…" autocomplete="off">
+        </label>
+
+        <div class="filter-grid">
+          <label>
+            <span>Catégorie</span>
+            <select id="categoryFilter">
+              <option value="all">Toutes</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Type</span>
+            <select id="typeFilter">
+              <option value="all">Tous</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Technologie</span>
+            <select id="technologyFilter">
+              <option value="all">Toutes</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Fonctionnalité</span>
+            <select id="featureFilter">
+              <option value="all">Toutes</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="toolbar-actions">
+          <button id="resetFilters" type="button" class="reset-button">Réinitialiser</button>
+        </div>
+      </section>
+
+      <section class="active-filter-panel" aria-live="polite">
+        <div class="active-filter-header">
+          <span>Filtres actifs</span>
+        </div>
+        <div id="activeFilters" class="chip-list" aria-live="polite"></div>
+      </section>
+
+      <details class="duplicate-panel" id="duplicatePanel">
+        <summary>Groupes de doublons exacts</summary>
+        <div id="duplicateGroups" class="duplicate-groups" aria-live="polite"></div>
+      </details>
+
+      <main>
+        <div id="resourceGrid" class="resource-grid" aria-live="polite"></div>
+
+        <div id="emptyState" class="empty-state" hidden>
+          <div class="empty-icon" aria-hidden="true">∅</div>
+          <h3>Aucun résultat pour cette combinaison</h3>
+          <p>Essayez une autre recherche ou réinitialisez les filtres pour retrouver un élément de la collection.</p>
+        </div>
+
+        <div id="noDataState" class="empty-state" hidden>
+          <div class="empty-icon" aria-hidden="true">!</div>
+          <h3>Catalogue indisponible</h3>
+          <p>Le fichier de données global <code>window.WEB_LIBRARY</code> n'est pas présent ou vide.</p>
+        </div>
+
+        <div id="errorState" class="empty-state error-state" hidden>
+          <div class="empty-icon" aria-hidden="true">⚠</div>
+          <h3>Erreur de chargement</h3>
+          <p>La bibliothèque n'a pas pu être lue. Vérifiez que <code>catalogue-data.js</code> est présent et chargé avant <code>gallery.js</code>.</p>
+        </div>
+      </main>
+    </div>
+
+    <noscript>
+      <div class="noscript-banner">JavaScript est requis pour filtrer et afficher le catalogue local.</div>
+    </noscript>
+
+    <script src="catalogue-data.js"></script>
+    <script src="gallery.js"></script>
+  </body>
+</html>

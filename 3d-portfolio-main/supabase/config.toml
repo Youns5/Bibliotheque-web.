@@ -1,0 +1,22 @@
+# Supabase CLI configuration.
+#
+# Only needed to run the stack locally (`supabase start`) or to deploy the Edge
+# Function from the CLI. Managing the project through the Dashboard works too.
+
+project_id = "portfolio"
+
+[auth]
+# Set this to your deployed origin in the Dashboard as well. Auth emails build
+# their links from it, so a stale value sends people to localhost.
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000/admin"]
+
+# This project has exactly one way in: an admin created in SQL. Leaving signup
+# open would let anyone create an account. They would still see nothing without
+# a row in admin_users, but there is no reason to allow it.
+enable_signup = false
+
+[functions.notify-contact]
+# The webhook carries its own shared secret in a header, so Supabase's JWT check
+# is not the thing protecting this endpoint.
+verify_jwt = false

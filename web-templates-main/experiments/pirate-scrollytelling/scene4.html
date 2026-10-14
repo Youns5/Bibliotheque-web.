@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escena 4: La Cueva del Kraken - El Último Pirata</title>
+    
+    <!-- Three.js moderno -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            overflow: hidden;
+            background: #0a0a1a;
+            font-family: 'Georgia', serif;
+        }
+        
+        canvas {
+            display: block;
+        }
+        
+        /* Panel de información debug */
+        #debug-panel {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.85);
+            color: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 100;
+            max-width: 320px;
+            border: 1px solid rgba(138, 43, 226, 0.5);
+        }
+        
+        #debug-panel h3 {
+            color: #8A2BE2;
+            margin-bottom: 10px;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(138, 43, 226, 0.3);
+            padding-bottom: 5px;
+        }
+        
+        #debug-panel p {
+            margin: 5px 0;
+            color: #aaa;
+        }
+        
+        #debug-panel .value {
+            color: #00FFFF;
+        }
+        
+        #debug-panel .section {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        #debug-panel .section-title {
+            color: #8A2BE2;
+            font-size: 11px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        
+        /* Checkboxes estilo toggle */
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 6px 0;
+            padding: 4px 0;
+        }
+        
+        .toggle-row label {
+            color: #ccc;
+            font-size: 11px;
+            cursor: pointer;
+        }
+        
+        .toggle-row input[type="checkbox"] {
+            width: 40px;
+            height: 20px;
+            appearance: none;
+            background: #333;
+            border-radius: 10px;
+            cursor: pointer;
+            position: relative;
+            transition: background 0.3s;
+        }
+        
+        .toggle-row input[type="checkbox"]::before {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #666;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s;
+        }
+        
+        .toggle-row input[type="checkbox"]:checked {
+            background: #8A2BE2;
+        }
+        
+        .toggle-row input[type="checkbox"]:checked::before {
+            left: 22px;
+            background: #00FFFF;
+        }
+        
+        /* Slider estilo */
+        .slider-row {
+            margin: 8px 0;
+        }
+        
+        .slider-row label {
+            display: block;
+            color: #ccc;
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+        
+        .slider-row input[type="range"] {
+            width: 100%;
+            height: 6px;
+            appearance: none;
+            background: #333;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .slider-row input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #8A2BE2;
+            cursor: pointer;
+        }
+        
+        .slider-value {
+            color: #00FFFF;
+            font-size: 10px;
+            text-align: right;
+        }
+        
+        /* Panel de historia */
+        #story-panel {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            max-width: 500px;
+            width: 90%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 1.5rem 2rem;
+            border-radius: 15px;
+            border: 1px solid rgba(138, 43, 226, 0.3);
+        }
+        
+        .story-title {
+            font-size: 1.8rem;
+            margin-bottom: 0.8rem;
+            background: linear-gradient(135deg, #8A2BE2, #00FFFF);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .story-text {
+            font-size: 1rem;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 0.5rem;
+        }
+        
+        .dialogue {
+            font-style: italic;
+            color: #00FFFF;
+            font-size: 0.95rem;
+            margin: 0.5rem 0;
+            padding: 0.3rem 0.8rem;
+            border-left: 2px solid #8A2BE2;
+        }
+        
+        .dialogue strong {
+            color: #fff;
+            font-style: normal;
+        }
+        
+        /* Loading */
+        #loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.95);
+            padding: 40px 60px;
+            border-radius: 20px;
+            text-align: center;
+            border: 1px solid rgba(138, 43, 226, 0.3);
+        }
+        
+        #loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(138, 43, 226, 0.3);
+            border-top-color: #8A2BE2;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Controles de cámara */
+        #controls-hint {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.6);
+            padding: 10px 20px;
+            border-radius: 20px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.85rem;
+            z-index: 100;
+        }
+        
+        /* Botón reset cámara */
+        #reset-camera {
+            position: fixed;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(138, 43, 226, 0.8);
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 12px;
+            z-index: 100;
+            transition: background 0.3s;
+        }
+        
+        #reset-camera:hover {
+            background: #8A2BE2;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading -->
+    <div id="loading">
+        <div id="loading-spinner"></div>
+        <div style="color: #8A2BE2; font-size: 1.2rem;">Cargando escena...</div>
+        <div id="loading-text" style="font-size: 14px; margin-top: 10px; color: #888;">Preparando la cueva</div>
+    </div>
+    
+    <!-- Panel de historia -->
+    <div id="story-panel">
+        <h1 class="story-title">La Cueva del Kraken</h1>
+        <p class="story-text">
+            Una caverna subterránea inundada parcialmente. El agua es negra y reflectante. 
+            Estalactitas cuelgan del techo, y gemas brillantes incrustadas en las paredes 
+            proporcionan la única luz. Del agua emergen los temibles tentáculos del Kraken.
+        </p>
+        <div class="dialogue">
+            <strong>Henry:</strong> "¡Ahí viene el monstruo! ¡Preparad los cañones!"
+        </div>
+    </div>
+    
+    <!-- Debug panel -->
+    <div id="debug-panel">
+        <h3>Debug - Escena 4: Cueva del Kraken</h3>
+        
+        <p>FPS: <span id="fps" class="value">--</span></p>
+        <p>Modelos cargados: <span id="models-loaded" class="value">--</span></p>
+        <p>Personajes: <span id="characters-loaded" class="value">--</span></p>
+        <p>Tentáculos: <span id="tentacles-loaded" class="value">--</span></p>
+        
+        <div class="section">
+            <div class="section-title">Efectos</div>
+            
+            <div class="toggle-row">
+                <label for="toggle-gems">Gemas brillantes</label>
+                <input type="checkbox" id="toggle-gems" checked>
+            </div>
+            
+            <div class="toggle-row">
+                <label for="toggle-fog">Niebla misteriosa</label>
+                <input type="checkbox" id="toggle-fog" checked>
+            </div>
+            
+            <div class="toggle-row">
+                <label for="toggle-water-anim">Animación agua</label>
+                <input type="checkbox" id="toggle-water-anim" checked>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">Iluminación</div>
+            
+            <div class="slider-row">
+                <label>Intensidad gemas</label>
+                <input type="range" id="gem-intensity" min="0" max="3" step="0.1" value="1.5">
+                <div class="slider-value"><span id="gem-value">1.5</span></div>
+            </div>
+            
+            <div class="slider-row">
+                <label>Intensidad ambiental</label>
+                <input type="range" id="ambient-intensity" min="0" max="1" step="0.05" value="0.2">
+                <div class="slider-value"><span id="ambient-value">0.2</span></div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">Helpers</div>
+            
+            <div class="toggle-row">
+                <label for="toggle-axes">Ejes XYZ</label>
+                <input type="checkbox" id="toggle-axes">
+            </div>
+            
+            <div class="toggle-row">
+                <label for="toggle-grid">Grid suelo</label>
+                <input type="checkbox" id="toggle-grid">
+            </div>
+        </div>
+    </div>
+    
+    <!-- Reset cámara -->
+    <button id="reset-camera">Reset Cámara</button>
+    
+    <!-- Controles hint -->
+    <div id="controls-hint">
+        Arrastra para rotar | Scroll para zoom | Click derecho para panear
+    </div>
+    
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        
+        import { CONFIG, createFallbackGeometry } from './js/config.js';
+        import { AnimationManager } from './js/animations.js';
+        
+        // ============================================
+        // VARIABLES GLOBALES
+        // ============================================
+        let scene, camera, renderer, controls;
+        let clock = new THREE.Clock();
+        let animationManager;
+        
+        // Modelos cargados
+        let loadedModels = {};
+        
+        // Elementos de la escena
+        let caveGroup;
+        let barbarossaModel, anneModel, henryModel, skeletonModel;
+        let tentacles = [];
+        let waterMesh;
+        let gemLights = [];
+        
+        // Luces
+        let ambientLight;
+        
+        // Helpers
+        let axesHelper, gridHelper;
+        
+        // Debug state
+        let debugState = {
+            gems: true,
+            fog: true,
+            waterAnim: true,
+            axes: false,
+            grid: false
+        };
+        
+        // FPS counter
+        let frameCount = 0;
+        let lastTime = performance.now();
+        
+        // ============================================
+        // INICIALIZACIÓN
+        // ============================================
+        async function init() {
+            setupThreeJS();
+            setupLights();
+            setupControls();
+            setupDebugControls();
+            setupHelpers();
+            
+            await loadModels();
+            
+            buildScene();
+            
+            // Ocultar loading
+            document.getElementById('loading').classList.add('hidden');
+            
+            // Iniciar animación
+            animate();
+        }
+        
+        // ============================================
+        // THREE.JS SETUP
+        // ============================================
+        function setupThreeJS() {
+            scene = new THREE.Scene();
+            
+            // Background azul medianoche
+            scene.background = new THREE.Color(0x0a0a1a);
+            
+            // Niebla densa azul-púrpura
+            scene.fog = new THREE.FogExp2(0x0a0a1a, 0.03);
+            
+            camera = new THREE.PerspectiveCamera(
+                CONFIG.camera.fov,
+                window.innerWidth / window.innerHeight,
+                CONFIG.camera.near,
+                CONFIG.camera.far
+            );
+            camera.position.set(0, 5, 20);
+            
+            renderer = new THREE.WebGLRenderer({
+                antialias: CONFIG.renderer.antialias,
+                alpha: true
+            });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, CONFIG.renderer.pixelRatioLimit));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 0.6;
+            
+            document.body.appendChild(renderer.domElement);
+            
+            // Resize handler
+            window.addEventListener('resize', onWindowResize);
+        }
+        
+        // ============================================
+        // LUCES
+        // ============================================
+        function setupLights() {
+            // Luz ambiental muy tenue
+            ambientLight = new THREE.AmbientLight(0x0a0a1a, 0.2);
+            scene.add(ambientLight);
+            
+            // Hemisphere light
+            const hemiLight = new THREE.HemisphereLight(0x1a1a3a, 0x0a0a1a, 0.1);
+            scene.add(hemiLight);
+        }
+        
+        // ============================================
+        // CONTROLES
+        // ============================================
+        function setupControls() {
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.minDistance = 5;
+            controls.maxDistance = 50;
+            controls.maxPolarAngle = Math.PI / 2 + 0.2;
+            controls.target.set(0, 2, 0);
+        }
+        
+        // ============================================
+        // HELPERS
+        // ============================================
+        function setupHelpers() {
+            // Ejes
+            axesHelper = new THREE.AxesHelper(10);
+            axesHelper.visible = false;
+            scene.add(axesHelper);
+            
+            // Grid
+            gridHelper = new THREE.GridHelper(50, 50, 0x2a2a4a, 0x1a1a3a);
+            gridHelper.position.y = 0.01;
+            gridHelper.visible = false;
+            scene.add(gridHelper);
+        }
+        
+        // ============================================
+        // CONTROLES DEBUG
+        // ============================================
+        function setupDebugControls() {
+            // Toggle gemas
+            document.getElementById('toggle-gems').addEventListener('change', (e) => {
+                debugState.gems = e.target.checked;
+                gemLights.forEach(light => {
+                    light.visible = debugState.gems;
+                });
+            });
+            
+            // Toggle niebla
+            document.getElementById('toggle-fog').addEventListener('change', (e) => {
+                debugState.fog = e.target.checked;
+                scene.fog = debugState.fog ? new THREE.FogExp2(0x0a0a1a, 0.03) : null;
+            });
+            
+            // Toggle animación agua
+            document.getElementById('toggle-water-anim').addEventListener('change', (e) => {
+                debugState.waterAnim = e.target.checked;
+            });
+            
+            // Intensidad gemas
+            document.getElementById('gem-intensity').addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                document.getElementById('gem-value').textContent = value.toFixed(1);
+                gemLights.forEach(light => {
+                    light.intensity = value;
+                });
+            });
+            
+            // Intensidad ambiental
+            document.getElementById('ambient-intensity').addEventListener('input', (e) => {
+                const value = parseFloat(e.target.value);
+                document.getElementById('ambient-value').textContent = value.toFixed(2);
+                ambientLight.intensity = value;
+            });
+            
+            // Toggle ejes
+            document.getElementById('toggle-axes').addEventListener('change', (e) => {
+                debugState.axes = e.target.checked;
+                axesHelper.visible = debugState.axes;
+            });
+            
+            // Toggle grid
+            document.getElementById('toggle-grid').addEventListener('change', (e) => {
+                debugState.grid = e.target.checked;
+                gridHelper.visible = debugState.grid;
+            });
+            
+            // Reset cámara
+            document.getElementById('reset-camera').addEventListener('click', () => {
+                camera.position.set(0, 5, 20);
+                controls.target.set(0, 2, 0);
+                controls.update();
+            });
+        }
+        
+        // ============================================
+        // CARGA DE MODELOS
+        // ============================================
+        async function loadModels() {
+            const loader = new GLTFLoader();
+            const modelsToLoad = {
+                // Personajes
+                barbarossa: CONFIG.models.barbarossa,
+                anne: CONFIG.models.anne,
+                henry: CONFIG.models.henry,
+                skeleton: CONFIG.models.skeleton,
+                // Tentáculos
+                tentacle: CONFIG.models.tentacle,
+                enemyTentacle: CONFIG.models.enemyTentacle,
+                // Environment
+                rock1: CONFIG.models.rock1,
+                rock2: CONFIG.models.rock2,
+                skull: CONFIG.models.skull
+            };
+            
+            const total = Object.keys(modelsToLoad).length;
+            let loaded = 0;
+            let successCount = 0;
+            
+            const loadModel = (name, path) => {
+                return new Promise((resolve) => {
+                    loader.load(
+                        path,
+                        (gltf) => {
+                            loadedModels[name] = gltf.scene;
+                            
+                            // Guardar animaciones si existen
+                            if (gltf.animations && gltf.animations.length > 0) {
+                                loadedModels[name + '_animations'] = gltf.animations;
+                                console.log(`Animaciones de ${name}:`, gltf.animations.map(a => a.name));
+                            }
+                            
+                            // Configurar sombras
+                            gltf.scene.traverse((child) => {
+                                if (child.isMesh) {
+                                    child.castShadow = true;
+                                    child.receiveShadow = true;
+                                }
+                            });
+                            
+                            loaded++;
+                            successCount++;
+                            document.getElementById('loading-text').textContent = 
+                                `${loaded}/${total} modelos cargados`;
+                            document.getElementById('models-loaded').textContent = `${successCount}/${total}`;
+                            
+                            console.log(`Modelo ${name} cargado correctamente`);
+                            resolve();
+                        },
+                        (progress) => {
+                            if (progress.total > 0) {
+                                const percent = (progress.loaded / progress.total * 100).toFixed(0);
+                                document.getElementById('loading-text').textContent = 
+                                    `Cargando ${name}: ${percent}%`;
+                            }
+                        },
+                        (error) => {
+                            console.warn(`Error cargando ${name}:`, error);
+                            loadedModels[name] = createFallbackGeometry(name);
+                            loaded++;
+                            document.getElementById('loading-text').textContent = 
+                                `${loaded}/${total} modelos (con fallback)`;
+                            resolve();
+                        }
+                    );
+                });
+            };
+            
+            await Promise.all(
+                Object.entries(modelsToLoad).map(([name, path]) => loadModel(name, path))
+            );
+            
+            console.log('=== RESUMEN DE CARGA ===');
+            console.log('Modelos:', Object.keys(loadedModels).filter(k => !k.includes('_animations')));
+        }
+        
+        // ============================================
+        // CONSTRUIR ESCENA
+        // ============================================
+        function buildScene() {
+            // Crear grupo principal
+            caveGroup = new THREE.Group();
+            scene.add(caveGroup);
+            
+            // Suelo de la cueva
+            buildGround(caveGroup);
+            
+            // Agua negra
+            buildWater(caveGroup);
+            
+            // Paredes de roca
+            buildCaveWalls(caveGroup);
+            
+            // Estalactitas
+            buildStalactites(caveGroup);
+            
+            // Gemas brillantes
+            buildGems(caveGroup);
+            
+            // Animation manager (antes de personajes)
+            animationManager = new AnimationManager();
+            
+            // Personajes en posición de batalla
+            buildCharacters(caveGroup);
+            
+            // Tentáculos del Kraken
+            buildTentacles(caveGroup);
+            
+            // Actualizar contadores
+            let charCount = 0;
+            if (barbarossaModel) charCount++;
+            if (anneModel) charCount++;
+            if (henryModel) charCount++;
+            if (skeletonModel) charCount++;
+            document.getElementById('characters-loaded').textContent = charCount + '/4';
+            document.getElementById('tentacles-loaded').textContent = tentacles.length + '/5';
+        }
+        
+        // ============================================
+        // SUELO
+        // ============================================
+        function buildGround(parent) {
+            // Suelo de roca oscura
+            const groundGeo = new THREE.PlaneGeometry(60, 60);
+            const groundMat = new THREE.MeshStandardMaterial({
+                color: 0x1a1a2a,
+                roughness: 0.9,
+                metalness: 0.1
+            });
+            const ground = new THREE.Mesh(groundGeo, groundMat);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            parent.add(ground);
+        }
+        
+        // ============================================
+        // AGUA
+        // ============================================
+        function buildWater(parent) {
+            // Agua negra reflectante
+            const waterGeo = new THREE.PlaneGeometry(40, 30, 32, 32);
+            const waterMat = new THREE.MeshStandardMaterial({
+                color: 0x0a0a1a,
+                roughness: 0.1,
+                metalness: 0.9,
+                transparent: true,
+                opacity: 0.8
+            });
+            waterMesh = new THREE.Mesh(waterGeo, waterMat);
+            waterMesh.rotation.x = -Math.PI / 2;
+            waterMesh.position.set(0, -0.3, -5);
+            waterMesh.receiveShadow = true;
+            parent.add(waterMesh);
+        }
+        
+        // ============================================
+        // PAREDES DE CUEVA
+        // ============================================
+        function buildCaveWalls(parent) {
+            // Rocas formando paredes
+            const wallPositions = [
+                // Pared izquierda
+                { x: -15, z: 0, scale: 3, rot: 0.3 },
+                { x: -14, z: -5, scale: 2.5, rot: -0.2 },
+                { x: -15, z: 5, scale: 2.8, rot: 0.1 },
+                // Pared derecha
+                { x: 15, z: 0, scale: 3, rot: -0.3 },
+                { x: 14, z: -5, scale: 2.5, rot: 0.2 },
+                { x: 15, z: 5, scale: 2.8, rot: -0.1 },
+                // Fondo
+                { x: 0, z: -15, scale: 3.5, rot: 0 },
+                { x: -5, z: -14, scale: 2.5, rot: 0.3 },
+                { x: 5, z: -14, scale: 2.5, rot: -0.3 }
+            ];
+            
+            wallPositions.forEach((pos, index) => {
+                const modelKey = index % 2 === 0 ? 'rock1' : 'rock2';
+                if (loadedModels[modelKey]) {
+                    const rock = loadedModels[modelKey].clone();
+                    rock.position.set(pos.x, 0, pos.z);
+                    rock.scale.setScalar(pos.scale);
+                    rock.rotation.y = pos.rot;
+                    parent.add(rock);
+                }
+            });
+        }
+        
+        // ============================================
+        // ESTALACTITAS
+        // ============================================
+        function buildStalactites(parent) {
+            // Crear estalactitas con geometría de cono
+            const stalactitePositions = [
+                { x: -8, z: -3, height: 4 },
+                { x: 0, z: -5, height: 5 },
+                { x: 8, z: -2, height: 3.5 },
+                { x: -4, z: 2, height: 3 },
+                { x: 4, z: 3, height: 4.5 },
+                { x: -10, z: 5, height: 3 },
+                { x: 10, z: 4, height: 3.5 }
+            ];
+            
+            stalactitePositions.forEach(pos => {
+                const geo = new THREE.ConeGeometry(0.5, pos.height, 6);
+                const mat = new THREE.MeshStandardMaterial({
+                    color: 0x2a2a3a,
+                    roughness: 0.8,
+                    metalness: 0.2
+                });
+                const stalactite = new THREE.Mesh(geo, mat);
+                stalactite.position.set(pos.x, 10 - pos.height / 2, pos.z);
+                stalactite.rotation.x = Math.PI; // Apuntando hacia abajo
+                stalactite.castShadow = true;
+                parent.add(stalactite);
+            });
+        }
+        
+        // ============================================
+        // GEMAS BRILLANTES
+        // ============================================
+        function buildGems(parent) {
+            const gemPositions = [
+                { x: -12, y: 2, z: -8, color: 0x00FFFF },
+                { x: 12, y: 3, z: -6, color: 0xFF00FF },
+                { x: -8, y: 1.5, z: 8, color: 0x00FF00 },
+                { x: 8, y: 2.5, z: 6, color: 0xFFFF00 },
+                { x: 0, y: 4, z: -10, color: 0xFF0000 },
+                { x: -6, y: 3, z: -4, color: 0x00FFFF },
+                { x: 6, y: 2, z: 4, color: 0xFF00FF }
+            ];
+            
+            gemPositions.forEach(pos => {
+                // Geometría de gema (octaedro)
+                const geo = new THREE.OctahedronGeometry(0.3);
+                const mat = new THREE.MeshStandardMaterial({
+                    color: pos.color,
+                    emissive: pos.color,
+                    emissiveIntensity: 0.5,
+                    roughness: 0.1,
+                    metalness: 0.8
+                });
+                const gem = new THREE.Mesh(geo, mat);
+                gem.position.set(pos.x, pos.y, pos.z);
+                parent.add(gem);
+                
+                // PointLight para iluminar
+                const light = new THREE.PointLight(pos.color, 1.5, 10);
+                light.position.set(pos.x, pos.y, pos.z);
+                parent.add(light);
+                gemLights.push(light);
+            });
+        }
+        
+        // ============================================
+        // PERSONAJES
+        // ============================================
+        function buildCharacters(parent) {
+            // Barbarossa - con espada
+            if (loadedModels.barbarossa) {
+                barbarossaModel = loadedModels.barbarossa;
+                barbarossaModel.position.set(-3, 0, 0);
+                barbarossaModel.scale.setScalar(1);
+                barbarossaModel.rotation.y = 0.3;
+                parent.add(barbarossaModel);
+                
+                if (loadedModels.barbarossa_animations) {
+                    animationManager.register('barbarossa', barbarossaModel, loadedModels.barbarossa_animations);
+                    animationManager.play('barbarossa', 'Sword');
+                }
+                
+                console.log('Barbarossa posicionado en:', barbarossaModel.position);
+            }
+            
+            // Anne - esquivando
+            if (loadedModels.anne) {
+                anneModel = loadedModels.anne;
+                anneModel.position.set(0, 0, 3);
+                anneModel.scale.setScalar(1);
+                anneModel.rotation.y = 0.5;
+                parent.add(anneModel);
+                
+                if (loadedModels.anne_animations) {
+                    animationManager.register('anne', anneModel, loadedModels.anne_animations);
+                    animationManager.play('anne', 'HitReact');
+                }
+                
+                console.log('Anne posicionada en:', anneModel.position);
+            }
+            
+            // Henry - cargando cañón
+            if (loadedModels.henry) {
+                henryModel = loadedModels.henry;
+                henryModel.position.set(4, 0, -2);
+                henryModel.scale.setScalar(1);
+                henryModel.rotation.y = -0.3;
+                parent.add(henryModel);
+                
+                if (loadedModels.henry_animations) {
+                    animationManager.register('henry', henryModel, loadedModels.henry_animations);
+                    animationManager.play('henry', 'Punch');
+                }
+                
+                console.log('Henry posicionado en:', henryModel.position);
+            }
+            
+            // Skeleton - muriendo y reviviendo
+            if (loadedModels.skeleton) {
+                skeletonModel = loadedModels.skeleton;
+                skeletonModel.position.set(-1, 0, 2);
+                skeletonModel.scale.setScalar(1);
+                parent.add(skeletonModel);
+                
+                if (loadedModels.skeleton_animations) {
+                    animationManager.register('skeleton', skeletonModel, loadedModels.skeleton_animations);
+                    animationManager.play('skeleton', 'Idle');
+                }
+                
+                console.log('Skeleton posicionado en:', skeletonModel.position);
+            }
+        }
+        
+        // ============================================
+        // TENTÁCULOS
+        // ============================================
+        function buildTentacles(parent) {
+            const tentaclePositions = [
+                { x: -2, z: -5, scale: 1.5, anim: 'Tentacle_Idle' },
+                { x: 3, z: -4, scale: 1.5, anim: 'Tentacle_Attack' },
+                { x: 0, z: -6, scale: 1.5, anim: 'Tentacle_Attack2' },
+                { x: -4, z: -3, scale: 1.3, anim: 'Tentacle_Idle' },
+                { x: 5, z: -5, scale: 1.3, anim: 'Tentacle_Poke' }
+            ];
+            
+            tentaclePositions.forEach((pos, index) => {
+                // Alternar entre Characters_Tentacle y Enemy_Tentacle
+                const modelKey = index < 3 ? 'tentacle' : 'enemyTentacle';
+                
+                if (loadedModels[modelKey]) {
+                    const tentacle = loadedModels[modelKey].clone();
+                    tentacle.position.set(pos.x, -0.5, pos.z);
+                    tentacle.scale.setScalar(pos.scale);
+                    parent.add(tentacle);
+                    tentacles.push(tentacle);
+                    
+                    // Animación si existe
+                    const animKey = modelKey + '_animations';
+                    if (loadedModels[animKey]) {
+                        animationManager.register('tentacle' + index, tentacle, loadedModels[animKey]);
+                        animationManager.play('tentacle' + index, pos.anim);
+                    }
+                }
+            });
+        }
+        
+        // ============================================
+        // ANIMACIÓN
+        // ============================================
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const delta = clock.getDelta();
+            const time = clock.getElapsedTime();
+            
+            // Update controls
+            controls.update();
+            
+            // Update animation manager
+            if (animationManager) {
+                animationManager.update();
+            }
+            
+            // Update efectos
+            updateEffects(time);
+            
+            // FPS counter
+            frameCount++;
+            const now = performance.now();
+            if (now - lastTime >= 1000) {
+                document.getElementById('fps').textContent = frameCount;
+                frameCount = 0;
+                lastTime = now;
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        function updateEffects(time) {
+            // Animación del agua
+            if (waterMesh && debugState.waterAnim) {
+                const positions = waterMesh.geometry.attributes.position.array;
+                
+                for (let i = 0; i < positions.length; i += 3) {
+                    const x = positions[i];
+                    const y = positions[i + 1];
+                    // Ondas suaves
+                    positions[i + 2] = Math.sin(x * 0.5 + time) * 0.1 + 
+                                       Math.cos(y * 0.3 + time * 0.7) * 0.1;
+                }
+                
+                waterMesh.geometry.attributes.position.needsUpdate = true;
+            }
+            
+            // Pulso de las gemas
+            gemLights.forEach((light, index) => {
+                if (light.visible) {
+                    light.intensity = 1.5 + Math.sin(time * 2 + index) * 0.5;
+                }
+            });
+        }
+        
+        // ============================================
+        // RESIZE
+        // ============================================
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        // Iniciar
+        init();
+    </script>
+</body>
+</html>
